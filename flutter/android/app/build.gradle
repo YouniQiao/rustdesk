@@ -38,7 +38,8 @@ String findRustlsPlatformVerifierMavenDir() {
     exec {
         workingDir = new File("../..")
         commandLine("cargo", "metadata", "--format-version", "1")
-    }.standardOutput = dependencyText
+        standardOutput = dependencyText
+    }
 
     def dependencyJson = new JsonSlurper().parseText(dependencyText.toString())
     def pkg = dependencyJson.packages.find { it.name == "rustls-platform-verifier-android" }
