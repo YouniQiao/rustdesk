@@ -34,12 +34,27 @@ if (flutterVersionName == null) {
 
 // Add rustls-platform-verifier Android support
 String findRustlsPlatformVerifierMavenDir() {
-    // Skip cargo metadata call - use dummy maven directory
-    def mavenDir = new File("../../libs/rustls-platform-verifier-android/maven")
-    println("✓ Using rustls-platform-verifier maven repo at: ${mavenDir.path}")
+    def dependencyText = new ByteArrayOutputStream()
+    exec {
+        workingDir = new File("../..")
+        commandLine("cargo", "metadata", "--format-version", "1")
+    }.standardOutput = dependencyText
+
+    def dependencyJson = new JsonSlurper().parseText(dependencyText.toString())
+    def pkg = dependencyJson.packages.find { it.name == "rustls-platform-verifier-android" }
+
+    if (pkg == null) {
+        throw new GradleException("rustls-platform-verifier-android package not found in cargo metadata!")
+    }
+
+    def manifestPath = file(pkg.manifest_path)
+    def mavenDir = new File(manifestPath.parentFile, "maven")
+    if (!mavenDir.exists()) {
+        throw new GradleException("Maven directory not found at: ${mavenDir}")
+    }
+    println("✓ Found rustls-platform-verifier maven repo at: ${mavenDir.path}")
     return mavenDir.path
 }
-
 
 repositories {
     maven {
